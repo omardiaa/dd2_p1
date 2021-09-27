@@ -12,14 +12,26 @@ def parseInput():
             fileName = sys.argv[i]
     return {"fileName":fileName, "useRand": useRand}
 
-def loadFile(fileName):
-    with open(fileName) as f:
-        lines = f.read()
-    return lines
+
+def loadVLOGInputsAndOutputs(vlogObject):
+    inputs=[]
+    outputs=[]
+    inouts=[]
+    for curObject in vlogObject:
+        for curPort in curObject.ports:
+            if curPort.mode == "input":
+                inputs.append({"name":curPort.name, "type":curPort.data_type})
+            elif curPort.mode == "output":
+                outputs.append({"name":curPort.name, "type":curPort.data_type})
+            elif curPort.mode == "inout":
+                inouts.append({"name":curPort.name, "type":curPort.data_type})
+    return {"inputs":inputs,"outputs":outputs,"inouts":inouts}    
 
 
 def main():
+    vlog_ex = vlog.VerilogExtractor()
     inputs = parseInput()
-    print(loadFile(inputs["fileName"]))
+    vlogObject = vlog_ex.extract_objects(inputs["fileName"])
+    print(loadVLOGInputsAndOutputs(vlogObject))
 
 main()

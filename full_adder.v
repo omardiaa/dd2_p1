@@ -3,8 +3,8 @@
 //For testing 
 //////////////////////////////////////////////////////////////////////////////////
 
-module full_adder (
-   input  a,
+module full_adder #(parameter x=0) (
+   input  [5:0] a,
    input  b,
    input  cin,
    output sum,
