@@ -48,7 +48,7 @@ def write_tb(vlogObject):
         for i in x['inouts']:
             out.write('reg ' + i['type'] + ' ' + i['name'] +  ' ;' + '\n')
        
-
+    
         
 
 
