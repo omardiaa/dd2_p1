@@ -43,14 +43,17 @@ def write_tb(vlogObject):
         out.write("module " + vlogObject.name + "_tb; " + '\n') 
         for i in x['inputs']:
             out.write('reg ' + i['type'] + ' ' + i['name'] +  ' ;' + '\n')
+            if (i['name']=="clk"):
+                z = True
         for i in x['outputs']:
             out.write('wire ' + i['type'] + ' ' + i['name'] +  ';' + '\n')
         for i in x['inouts']:
             out.write('reg ' + i['type'] + ' ' + i['name'] +  ' ;' + '\n')
        
-    
-        
-
+       
+        if (z): 
+            out.write("\n\ninitial begin \nclk =0; \nforever#(5) clk<=~clk;\nend ")
+         
 
 
 
@@ -76,7 +79,8 @@ def write_tb(vlogObject):
         out.write("initial begin \n" + "//Inputs initialization \n") 
 
         for i in x['inputs']: 
-            out.write(i['name'] + " = 0; \n")
+            if(i['name']!="clk"):
+                out.write(i['name'] + " = 0; \n")
         for i in x['inouts']: 
             out.write(i['name'] + " = 0; \n ") 
         out.write("//wait for the reset \n#100")
@@ -96,5 +100,4 @@ def main():
 
 
 
-main() 
-
+main()
