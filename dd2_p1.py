@@ -5,13 +5,19 @@ import hdlparse.verilog_parser as vlog
 def parseInput():
     numberOfParameters = len(sys.argv)
     useRand = False
-
+    clkpr= "5"
+    rstpr= "50"
+    terminatepr= "50"
+    x=0
     for i in range(numberOfParameters):
-        if(sys.argv[i]=="-rand"):
+        if(sys.argv[1]=="-rand"):
             useRand = True
-        else:
-            fileName = sys.argv[i]
-    return {"fileName":fileName, "useRand": useRand}
+            x=1
+        fileName = sys.argv[1+x]
+        clkpr= sys.argv[2+x]
+        rstpr= sys.argv[3+x]
+        terminatepr= sys.argv[4+x]
+    return {"fileName":fileName, "useRand": useRand, "clkpr":clkpr, "rstpr":rstpr,"terminatepr":terminatepr}
 
 
 def loadVLOGInputsAndOutputs(vlogObject):
@@ -29,30 +35,38 @@ def loadVLOGInputsAndOutputs(vlogObject):
     return {"inputs":inputs,"outputs":outputs,"inouts":inouts}    
 
 
-def write_tb(vlogObject):
+def write_tb(vlogObject, clkpr, rstpr,terminatepr):
     
     x = loadVLOGInputsAndOutputs(vlogObject)
-    z = False 
+    clk = False 
+    rst = False 
+    rstname=""
+    clkname=""
     with open(vlogObject.name + "_tb.v", 'w') as out:
         y = vlogObject.name + "_tb.v" 
         os.remove(y) 
-    print (x) 
     with open(vlogObject.name + "_tb.v", 'w') as out:
         out.write("// file: " + vlogObject.name + "_tb.v" +  '\n' )
         out.write("`timescale 1ns/1ns" + '\n' + '\n' + '\n') 
         out.write("module " + vlogObject.name + "_tb; " + '\n') 
         for i in x['inputs']:
-            out.write('reg ' + i['type'] + ' ' + i['name'] +  ' ;' + '\n')
-            if (i['name']=="clk"):
-                z = True
+            out.write('reg ' + i['type'] + ' ' + i['name'] +  '_i ;' + '\n')
+            if (((i['name'].lower()=="clk")|(i['name'].lower()=="clock"))):
+                clk = True
+                clkname=i['name'].lower()
+            if (((i['name'].lower()=="rst")|(i['name'].lower()=="reset"))):
+                rst = True
+                rstname=i['name'].lower()
         for i in x['outputs']:
-            out.write('wire ' + i['type'] + ' ' + i['name'] +  ';' + '\n')
+            out.write('wire ' + i['type'] + ' ' + i['name'] +  '_o;' + '\n')
         for i in x['inouts']:
-            out.write('reg ' + i['type'] + ' ' + i['name'] +  ' ;' + '\n')
+            out.write('reg ' + i['type'] + ' ' + i['name'] +  '_io ;' + '\n')
        
        
-        if (z): 
-            out.write("\n\ninitial begin \nclk =0; \nforever#(5) clk<=~clk;\nend ")
+        if (clk): 
+            out.write("\n\ninitial begin \n"+clkname+"_i =0; \nforever#("+ str(clkpr) +") "+clkname+"_i <= ~"+clkname+"_i ;\nend ")
+        if (rst): 
+            out.write("\n\ninitial begin \n"+rstname+"_i =0; \nforever#("+ str(rstpr) +") "+rstname+"_i <= ~"+rstname+"_i ;\nend ")
          
 
 
@@ -61,11 +75,11 @@ def write_tb(vlogObject):
         out.write(vlogObject.name + " uut " + "("  + "\n") 
         
         for i in x['inputs']: 
-            out.write("." + i['name'] + "(" + i['name'] + ")," + "\n")
+            out.write("." + i['name'] + "(" + i['name'] + "_i)," + "\n")
         for i in x['outputs']: 
-            out.write("." + i['name'] + "(" + i['name'] + ")," + "\n")  
+            out.write("." + i['name'] + "(" + i['name'] + "_o)," + "\n")  
         for i in x['inouts']: 
-            out.write("." + i['name'] + "(" + i['name'] + ")," + "\n")  
+            out.write("." + i['name'] + "(" + i['name'] + "_io)," + "\n")  
         
     with open(y, 'rb+') as filehandle:
         filehandle.seek(-1, os.SEEK_END)
@@ -75,16 +89,47 @@ def write_tb(vlogObject):
         filehandle.close()
 
     with open(vlogObject.name + "_tb.v", 'a') as out:
-        out.write("); \n \n \n ")
-        out.write("initial begin \n" + "//Inputs initialization \n") 
 
+        out.write("); \n \n \n ")
+        out.write("initial begin\n$dumpfile(\""+vlogObject.name + "_tb"+".vcd\");\n$dumpvars;")
+        out.write("\nend \n")
+
+        out.write(" \n \n \n ")
+        out.write("initial begin \n" + "//Inputs initialization \n") 
+        out.write(" $monitor( \"") 
+        for i in x['inputs']: 
+            out.write(i['name']+"=%d,")
+        for i in x['outputs']: 
+            out.write(i['name']+"=%d,")
+    with open(y, 'rb+') as filehandle:
+        filehandle.seek(-1, os.SEEK_END)
+        filehandle.truncate()
+        filehandle.close()
+    with open(vlogObject.name + "_tb.v", 'a') as out:
+        out.write(" \", ")
+        for i in x['inputs']: 
+            out.write(i['name']+"_i,")
+        for i in x['outputs']: 
+            out.write(i['name']+"_o,") 
+
+    with open(y, 'rb+') as filehandle:
+        filehandle.seek(-1, os.SEEK_END)
+        filehandle.truncate()
+        filehandle.close()
+    with open(vlogObject.name + "_tb.v", 'a') as out:
+        out.write(" );\n\n")
+       
         for i in x['inputs']: 
             if(i['name']!="clk"):
-                out.write(i['name'] + " = 0; \n")
+                out.write(i['name'] + "_i = 0; \n")
         for i in x['inouts']: 
-            out.write(i['name'] + " = 0; \n ") 
+            out.write(i['name'] + "_o = 0; \n ") 
         out.write("//wait for the reset \n#100")
+        out.write("\n#"+terminatepr+"\n$finish")
         out.write("\nend \nendmodule")
+
+    with open(vlogObject.name + "_tb.v", 'r') as out:
+        print(out.read())
 
 
 def main():
@@ -94,7 +139,7 @@ def main():
     
 
     for m in vlogModules:
-        write_tb(m)
+        write_tb(m,inputs["clkpr"],inputs["rstpr"],inputs["terminatepr"])
    
 
 
