@@ -12,6 +12,11 @@ wire  sum_o;
 wire  cout_o;
 
 
+reg [31:0] counter;
+initial begin 
+forever#(1) counter = counter+1;
+end
+
 initial begin 
 clk_i =0; 
 forever#(10) clk_i <= ~clk_i ;
@@ -31,7 +36,7 @@ full_adder uut (
 .clk(clk_i),
 .rst(rst_i),
 .sum(sum_o),
-.cout(cout_o)); 
+.cout(cout_o),); 
  
  
  initial begin
@@ -45,13 +50,17 @@ end
 //Inputs initialization 
  $monitor( "a=%d,b=%d,cin=%d,clk=%d,rst=%d,sum=%d,cout=%d ", a_i,b_i,cin_i,clk_i,rst_i,sum_o,cout_o );
 
-a_i = 0; 
-b_i = 0; 
-cin_i = 0; 
-rst_i = 0; 
+initial begin
+forever#(10)
+
+begin
+a_i = $random; 
+b_i = $random; 
+cin_i = $random; 
+end
+end
 //wait for the reset 
 #100
-#800
-$finish
+if(counter == 800)$finish
 end 
 endmodule
