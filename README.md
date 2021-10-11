@@ -23,3 +23,20 @@
     - The test bench instantiates the Module and pass the appropriate parameters.
     - The testbench dumbs the changes in all signals for all hierarchy levels into a file named after the testbench name (.vcd extension)
     - If rand parameter is passed to the terminal, random test benches will be generated.
+
+#### Dependencies:
+- To run the program, you need to have the following library installed on your device and running.
+    - import hdlparse.verilog_parser as vlog.
+    - you can find the library installation and documentation in the following link:
+        + Hdlparse: https://kevinpt.github.io/hdlparse/ .
+    - this library is responsible for parsing the file containing the target module, providing an array of module   objects holding the ports, parameters, and module name.
+
+
+#### Problems:
+- The program does not support error checking on the target module; thus make sure you have a well structured target module before running the testbench creator.
+- if provided "input wire" instead of input, the resulting testbench would have a problem in declairing the port, thus make sure to have inputs as "input" not "input wire", which is technically the same.
+
+#### Contributors:
+- Youssef Ashraf Kandil
+- Mohamed Aly Ellethy
+- Omar Diaa El-Dessouky
