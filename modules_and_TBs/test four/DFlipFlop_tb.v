@@ -47,11 +47,14 @@ end
 
 
 initial begin
-rst_i = 0; 
 D_i = 0; 
+forever#(100)
+
+begin
+D_i = $random; 
 
 end
-
+end
 
 
 initial begin
