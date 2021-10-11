@@ -3,7 +3,7 @@
 //For testing 
 //////////////////////////////////////////////////////////////////////////////////
 
-module full_adder #(parameter x=0) (input A,B,cin, output sum, cout);
+module multi_bit_adder  (input[5:0] A,B, input cin, output sum, cout);
    
   assign {cout, sum}= A+B+cin;
 endmodule
