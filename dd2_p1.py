@@ -60,16 +60,24 @@ def write_tb(vlogObject, clkpr, rstpr, terminatepr, useRand, randomPeriod):
 
     with open(vlogObject.name + "_tb.v", 'w') as out:
         out.write("// file: " + vlogObject.name + "_tb.v" +  '\n' )
+        #Creating a testbench file
+
         out.write("`timescale 1ns/1ns" + '\n' + '\n' + '\n') 
+        #defining the timescale to be 1ns/1ns
         out.write("module " + vlogObject.name + "_tb; " + '\n') 
+        #Creating a test bench file
+
         for i in x['inputs']:
             out.write('reg ' + i['type'] + ' ' + i['name'] +  '_i ;' + '\n')
             if (((i['name'].lower()=="clk")|(i['name'].lower()=="clock"))):
                 clk = True
                 clkname=i['name'].lower()
+                #Defines whether a clock is being used or not (clk is set to true or false)
             if (((i['name'].lower()=="rst")|(i['name'].lower()=="reset"))):
                 rst = True
                 rstname=i['name'].lower()
+                #Defines whether a reset is being used or not
+
         for i in x['outputs']:
             if (i['reg']=="reg"):
                 mm=i['type']
@@ -79,15 +87,18 @@ def write_tb(vlogObject, clkpr, rstpr, terminatepr, useRand, randomPeriod):
                 out.write('wire' + i['type'] + ' ' + i['name'] +  '_o;' + '\n')               
         for i in x['inouts']:
             out.write('reg ' + i['type'] + ' ' + i['name'] +  '_io ;' + '\n')
-            
+        #Defining inputs and outputs of the test bench   
         
         out.write("\n\nreg [31:0] counter;\ninitial begin \nforever#(1) counter = counter+1;\nend")
+        #Changing a counter to terminate after the termination period
 
         if (clk): 
             out.write("\n\ninitial begin \n"+clkname+"_i =0; \nforever#("+ str(clkpr) +") "+clkname+"_i <= ~"+clkname+"_i ;\nend ")
+            #Repeating clock signal every clk period (clkpr)
 
         if (rst): 
             out.write("\n\ninitial begin \n"+rstname+"_i =0; \nforever#("+ str(rstpr) +") "+rstname+"_i <= ~"+rstname+"_i ;\nend ")
+            #Reset value varying between 1 and 0 every rst period (parameter)
 
 
         out.write("\n" + "\n" + "\n" + "//Instantiation of Unit Under Test \n")
@@ -95,10 +106,13 @@ def write_tb(vlogObject, clkpr, rstpr, terminatepr, useRand, randomPeriod):
         
         for i in x['inputs']: 
             out.write("." + i['name'] + "(" + i['name'] + "_i)," + "\n")
+            #Passing the inputs to the verilog module
         for i in x['outputs']: 
             out.write("." + i['name'] + "(" + i['name'] + "_o)," + "\n")  
+            #Passing the outputs to the verilog module
         for i in x['inouts']: 
             out.write("." + i['name'] + "(" + i['name'] + "_io)," + "\n")  
+            #Passing the inputoutps to the verilog module
         
     with open(y, 'rb+') as filehandle:
         filehandle.seek(-1, os.SEEK_END)
@@ -106,12 +120,14 @@ def write_tb(vlogObject, clkpr, rstpr, terminatepr, useRand, randomPeriod):
         filehandle.seek(-1, os.SEEK_END)
         filehandle.truncate()
         filehandle.close()
+        #removing the additional commas at the end
 
     with open(vlogObject.name + "_tb.v", 'a') as out:
 
         out.write("); \n \n \n ")
         out.write("initial begin\n$dumpfile(\""+vlogObject.name + "_tb"+".vcd\");\n$dumpvars;")
         out.write("\nend \n")
+        #Dumping all changes for all variables in a dumpfile
 
         out.write(" \n \n \n ")
         out.write("initial begin \n" + "//Inputs initialization \n") 
@@ -120,11 +136,13 @@ def write_tb(vlogObject, clkpr, rstpr, terminatepr, useRand, randomPeriod):
             out.write(i['name']+"=%d,")
         for i in x['outputs']: 
             out.write(i['name']+"=%d,")
+        #Using monitor to display the values of the ports on verilog terminal
 
     with open(y, 'rb+') as filehandle:
         filehandle.seek(-1, os.SEEK_END)
         filehandle.truncate()
         filehandle.close()
+        #removing additional comma
 
     with open(vlogObject.name + "_tb.v", 'a') as out:
         out.write(" \", ")
@@ -132,6 +150,8 @@ def write_tb(vlogObject, clkpr, rstpr, terminatepr, useRand, randomPeriod):
             out.write(i['name']+"_i,")
         for i in x['outputs']: 
             out.write(i['name']+"_o,") 
+    #Using inputs and outputs names for the monitor
+    
 
     with open(y, 'rb+') as filehandle:
         filehandle.seek(-1, os.SEEK_END)
@@ -141,15 +161,17 @@ def write_tb(vlogObject, clkpr, rstpr, terminatepr, useRand, randomPeriod):
     with open(vlogObject.name + "_tb.v", 'a') as out:
         out.write(" );\n")
         out.write("end\n\n\n")
-        if useRand: 
+        if useRand: #randomizing inputs values if useRand is true
             out.write("initial begin\n")
             for i in x['inputs']: 
                 if((i['name'].lower()!="clk")&(i['name'].lower()!="clock")&(i['name'].lower()!="rst")&(i['name'].lower()!="reset")):
                     out.write(i['name'] + "_i = 0; \n")
             for i in x['inouts']: 
                 out.write(i['name'] + "_o = 0; \n ") 
+            #initalizing inputs and inouts with zeros
 
             out.write("forever#("+randomPeriod+")\n\nbegin\n")
+            #repeating randomzing values for the inputs and inouts
 
             for i in x['inputs']: 
                 if((i['name'].lower()!="clk")&(i['name'].lower()!="clock")&(i['name'].lower()!="rst")&(i['name'].lower()!="reset")):
@@ -159,7 +181,7 @@ def write_tb(vlogObject, clkpr, rstpr, terminatepr, useRand, randomPeriod):
 
             out.write("\nend\nend\n")
 
-        else:
+        else: #if useRand = false, initialize inputs and inouts with zeros
             out.write("initial begin\n")
             for i in x['inputs']: 
                 if((i['name'].lower()!="clk")&(i['name'].lower()!="clock")):
@@ -172,7 +194,7 @@ def write_tb(vlogObject, clkpr, rstpr, terminatepr, useRand, randomPeriod):
         out.write("\nif(counter == "+terminatepr+")$finish;")
         
         out.write("\nend \nendmodule")
-
+        #End modules
     with open(vlogObject.name + "_tb.v", 'r') as out:
         print(out.read())
 
