@@ -1,9 +1,6 @@
 # dd2_p1
 
 #### How to run?
- - tbgen -rand input_verilog_file_name
-
-#### Inputs:
  - To run the program, enter the following command on the terminal in the target directory:
 
     - python3 dd2_p1.py %target_module.v% clkperiod rstperiod termination randperiod
@@ -16,7 +13,7 @@
       - for example:
       - python3 dd2_p1.py -rand DFlipFlop.v 10 100 800 100
 
-### Outputs:
+#### Outputs:
  
 - A test bench file and a printed Test Bench Program on the terminal following the following guide
     - The test bench name is the same module name + _tb
@@ -26,4 +23,3 @@
     - The test bench instantiates the Module and pass the appropriate parameters.
     - The testbench dumbs the changes in all signals for all hierarchy levels into a file named after the testbench name (.vcd extension)
     - If rand parameter is passed to the terminal, random test benches will be generated.
-    - 
