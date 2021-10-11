@@ -3,17 +3,9 @@
 //For testing 
 //////////////////////////////////////////////////////////////////////////////////
 
-module full_adder #(parameter x=0) (
-   input  [5:0] a,
-   input  b,
-   input  cin,
-   input  clk,
-   input  rst,
-   output sum,
-   output cout
-);
-
-   assign {cout,sum} = a+b+cin;
-  
+module full_adder #(parameter x=0) (input A,B,cin, output sum, cout);
+   
+   
+   
+  assign {cout, sum}= A+B+cin;
 endmodule
-

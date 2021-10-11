@@ -30,12 +30,17 @@ def loadVLOGInputsAndOutputs(vlogObject):
     inputs=[]
     outputs=[]
     inouts=[]
-    
+    reg ="reg"
+    none=" none" 
     for curPort in vlogObject.ports:
         if curPort.mode == "input":
             inputs.append({"name":curPort.name, "type":curPort.data_type})
         elif curPort.mode == "output":
-            outputs.append({"name":curPort.name, "type":curPort.data_type})
+            if (reg in curPort.data_type):
+                curPort.data_type.replace('reg', '')
+                outputs.append({"name":curPort.name, "type":curPort.data_type, "reg":reg})
+            else:
+                outputs.append({"name":curPort.name, "type":curPort.data_type, "reg":none})
         elif curPort.mode == "inout":
             inouts.append({"name":curPort.name, "type":curPort.data_type})
     return {"inputs":inputs,"outputs":outputs,"inouts":inouts}    
@@ -47,6 +52,7 @@ def write_tb(vlogObject, clkpr, rstpr, terminatepr, useRand, randomPeriod):
     rst = False 
     rstname=""
     clkname=""
+    print(x)
     with open(vlogObject.name + "_tb.v", 'w') as out:
         y = vlogObject.name + "_tb.v" 
         out.close()
@@ -65,7 +71,12 @@ def write_tb(vlogObject, clkpr, rstpr, terminatepr, useRand, randomPeriod):
                 rst = True
                 rstname=i['name'].lower()
         for i in x['outputs']:
-            out.write('wire ' + i['type'] + ' ' + i['name'] +  '_o;' + '\n')
+            if (i['reg']=="reg"):
+                mm=i['type']
+                mm=mm.replace('reg', '')
+                out.write('wire' +mm+ ' ' + i['name'] +  '_o;' + '\n')
+            else:
+                out.write('wire' + i['type'] + ' ' + i['name'] +  '_o;' + '\n')               
         for i in x['inouts']:
             out.write('reg ' + i['type'] + ' ' + i['name'] +  '_io ;' + '\n')
             
@@ -128,9 +139,17 @@ def write_tb(vlogObject, clkpr, rstpr, terminatepr, useRand, randomPeriod):
         filehandle.close()
 
     with open(vlogObject.name + "_tb.v", 'a') as out:
-        out.write(" );\n\n")
+        out.write(" );\n")
+        out.write("end\n\n\n")
         if useRand: 
-            out.write("initial begin\nforever#("+randomPeriod+")\n\nbegin\n")
+            out.write("initial begin\n")
+            for i in x['inputs']: 
+                if((i['name'].lower()!="clk")&(i['name'].lower()!="clock")&(i['name'].lower()!="rst")&(i['name'].lower()!="reset")):
+                    out.write(i['name'] + "_i = 0; \n")
+            for i in x['inouts']: 
+                out.write(i['name'] + "_o = 0; \n ") 
+
+            out.write("forever#("+randomPeriod+")\n\nbegin\n")
 
             for i in x['inputs']: 
                 if((i['name'].lower()!="clk")&(i['name'].lower()!="clock")&(i['name'].lower()!="rst")&(i['name'].lower()!="reset")):
@@ -138,18 +157,19 @@ def write_tb(vlogObject, clkpr, rstpr, terminatepr, useRand, randomPeriod):
             for i in x['inouts']: 
                 out.write(i['name'] + "_o = $random; \n ") 
 
-            out.write("end\nend\n")
+            out.write("\nend\nend\n")
 
         else:
+            out.write("initial begin\n")
             for i in x['inputs']: 
-                if(i['name'].lower()!="clk"&i['name'].lower()!="clock"):
+                if((i['name'].lower()!="clk")&(i['name'].lower()!="clock")):
                     out.write(i['name'] + "_i = 0; \n")
             for i in x['inouts']: 
                 out.write(i['name'] + "_o = 0; \n ") 
-      
-        out.write("//wait for the reset \n#100")
-        
-        out.write("\nif(counter == "+terminatepr+")$finish")
+            out.write("\nend\n\n")
+        out.write("\n\n")
+        out.write("initial begin\n")
+        out.write("\nif(counter == "+terminatepr+")$finish;")
         
         out.write("\nend \nendmodule")
 
